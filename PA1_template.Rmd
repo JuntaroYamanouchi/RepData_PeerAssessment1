@@ -1,25 +1,144 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PeerAssessment1"
+output: html_document
 ---
 
+##Loading and preprocessing the data
+To begin with, we need to load the needed packages:
 
-## Loading and preprocessing the data
+```{r, echo = TRUE}
+require(ggplot2)
+```
+
+Then we have to read the data from the csv file:
+
+```{r, echo = TRUE}
+activity <- read.csv("activity.csv", stringsAsFactors = FALSE)
+
+activity$date <- as.Date(activity$date)
+```
+
+##What is mean total number of steps taken per day?
+
+First of all we want to aggregate the data by date:
+
+```{r, echo = TRUE}
+totalSteps <- aggregate(steps ~ date, data=activity, FUN=sum, na.rm=TRUE)
+```
+
+The histogram with the total number of steps per day is:
+
+```{r, echo = TRUE}
+ggplot(totalSteps, aes(x=date, y=steps)) + stat_summary(fun.y="sum", geom="bar") + xlab("Date") + ylab("Total number of steps") 
+```
 
 
+The mean of the total number of steps taken per day is:
 
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
+```{r, echo = TRUE}
+mean(totalSteps$steps)
+```
 
 
-## Imputing missing values
+The median of the total number of steps taken per day is:
+
+```{r, echo = TRUE}
+median(totalSteps$steps)
+```
 
 
+##What is the average daily activity pattern?
+We aggregate the data by the mean of every individual interval:
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r, echo = TRUE}
+intervalSteps <- aggregate(steps ~ interval, data=activity, FUN=mean, na.rm=TRUE)
+```
+
+We make a time series plot of the 5-minute interval and the average number of steps taken, averaged across all days:
+
+```{r, echo = TRUE}
+ggplot(intervalSteps, aes(interval, steps)) + geom_line() + xlab("5 Minute Interval") + ylab("Average Number of Steps")
+```
+
+
+The 5-minute interval that, on average across all the days in the dataset, contains the maximum number of steps is:
+
+```{r, echo = TRUE}
+intervalSteps[which.max(intervalSteps$steps),]
+```
+
+##Imputing missing values
+
+We calculate the total number of missing values in the dataset:
+
+```{r, echo = TRUE}
+sum(!complete.cases(activity))
+```
+
+To fill the missing value from the original dataset, we decide to use the interval mean previously calculated.
+First, we merge the original dataset with the mean dataset:
+
+```{r, echo = TRUE}
+filledData <- merge(activity, intervalSteps, by='interval')
+colnames(filledData) <- c("interval", "steps", "date", "mean")
+```
+
+Then we replace the missing values with the interval mean (rounded to the nearest integer):
+```{r, echo = TRUE}
+filledData$mean <- as.integer(filledData$mean)
+filledData$steps <- ifelse(is.na(filledData$steps), filledData$mean, filledData$steps)
+filledData$mean <- NULL
+```
+
+To make a histogram of the dataset without missing values, we have to aggregate the data by day:
+
+```{r, echo = TRUE}
+filledDataByDay <- aggregate(steps ~ date, data=filledData, FUN=sum)
+```
+
+This is the histogram with the new dataset:
+
+```{r, echo = TRUE}
+ggplot(filledDataByDay, aes(x=date, y=steps)) + stat_summary(fun.y="sum", geom="bar") + xlab("Date") + ylab("Total number of steps")
+```
+
+As we've done previously, the mean of the new dataset is:
+
+```{r, echo = TRUE}
+mean(filledDataByDay$steps)
+```
+
+And the median is:
+```{r, echo = TRUE}
+median(filledDataByDay$steps)
+```
+
+The mean and the median are not very different from what we calculated before.
+
+##Are there differences in activity patterns between weekdays and weekends?
+
+First we create a factor variable to describe the type of day:
+```{r, echo = TRUE}
+dayType <- function(date) {
+            if (weekdays(as.Date(date)) %in% c("Saturday", "Sunday")) {
+                "weekend"
+            } else {
+                "weekday"
+            }
+        }
+```
+
+Then we apply this function to the filled dataset:
+```{r, echo = TRUE}
+filledData$dayType <- as.factor(sapply(filledData$date, dayType))
+```
+
+Finally we make a plot to compare the difference in the average number of steps between weekdays and weekends:
+
+```{r, echo = TRUE}
+par(mfrow = c(2, 1))
+for (type in c("weekend", "weekday")) {
+    daytype <- aggregate(steps ~ interval, data = filledData, subset = filledData$dayType == type, FUN = mean)
+    plot(daytype, type = "l", main = type)
+}
+```
