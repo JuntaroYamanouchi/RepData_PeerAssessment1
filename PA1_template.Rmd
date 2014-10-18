@@ -13,6 +13,7 @@ require(ggplot2)
 Then we have to read the data from the csv file:
 
 ```{r, echo = TRUE}
+unzip("activity.zip")
 activity <- read.csv("activity.csv", stringsAsFactors = FALSE)
 
 activity$date <- as.Date(activity$date)
