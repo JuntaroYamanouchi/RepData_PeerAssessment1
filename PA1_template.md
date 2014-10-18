@@ -11,32 +11,14 @@ To begin with, we need to load the needed packages:
 require(ggplot2)
 ```
 
-```
-## Loading required package: ggplot2
-```
-
 Then we have to read the data from the csv file:
 
 
 ```r
+unzip("activity.zip")
 activity <- read.csv("activity.csv", stringsAsFactors = FALSE)
-```
 
-```
-## Warning in file(file, "rt"): cannot open file 'activity.csv': No such file
-## or directory
-```
-
-```
-## Error in file(file, "rt"): cannot open the connection
-```
-
-```r
 activity$date <- as.Date(activity$date)
-```
-
-```
-## Error in as.Date(activity$date): object 'activity' not found
 ```
 
 ##What is mean total number of steps taken per day?
@@ -48,10 +30,6 @@ First of all we want to aggregate the data by date:
 totalSteps <- aggregate(steps ~ date, data=activity, FUN=sum, na.rm=TRUE)
 ```
 
-```
-## Error in eval(expr, envir, enclos): object 'activity' not found
-```
-
 The histogram with the total number of steps per day is:
 
 
@@ -59,9 +37,7 @@ The histogram with the total number of steps per day is:
 ggplot(totalSteps, aes(x=date, y=steps)) + stat_summary(fun.y="sum", geom="bar") + xlab("Date") + ylab("Total number of steps") 
 ```
 
-```
-## Error in ggplot(totalSteps, aes(x = date, y = steps)): object 'totalSteps' not found
-```
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
 
 
 The mean of the total number of steps taken per day is:
@@ -72,7 +48,7 @@ mean(totalSteps$steps)
 ```
 
 ```
-## Error in mean(totalSteps$steps): object 'totalSteps' not found
+## [1] 10766.19
 ```
 
 
@@ -84,7 +60,7 @@ median(totalSteps$steps)
 ```
 
 ```
-## Error in median(totalSteps$steps): object 'totalSteps' not found
+## [1] 10765
 ```
 
 
@@ -96,10 +72,6 @@ We aggregate the data by the mean of every individual interval:
 intervalSteps <- aggregate(steps ~ interval, data=activity, FUN=mean, na.rm=TRUE)
 ```
 
-```
-## Error in eval(expr, envir, enclos): object 'activity' not found
-```
-
 We make a time series plot of the 5-minute interval and the average number of steps taken, averaged across all days:
 
 
@@ -107,9 +79,7 @@ We make a time series plot of the 5-minute interval and the average number of st
 ggplot(intervalSteps, aes(interval, steps)) + geom_line() + xlab("5 Minute Interval") + ylab("Average Number of Steps")
 ```
 
-```
-## Error in ggplot(intervalSteps, aes(interval, steps)): object 'intervalSteps' not found
-```
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
 
 
 The 5-minute interval that, on average across all the days in the dataset, contains the maximum number of steps is:
@@ -120,7 +90,8 @@ intervalSteps[which.max(intervalSteps$steps),]
 ```
 
 ```
-## Error in eval(expr, envir, enclos): object 'intervalSteps' not found
+##     interval    steps
+## 104      835 206.1698
 ```
 
 ##Imputing missing values
@@ -133,7 +104,7 @@ sum(!complete.cases(activity))
 ```
 
 ```
-## Error in complete.cases(activity): object 'activity' not found
+## [1] 2304
 ```
 
 To fill the missing value from the original dataset, we decide to use the interval mean previously calculated.
@@ -142,44 +113,15 @@ First, we merge the original dataset with the mean dataset:
 
 ```r
 filledData <- merge(activity, intervalSteps, by='interval')
-```
-
-```
-## Error in merge(activity, intervalSteps, by = "interval"): object 'activity' not found
-```
-
-```r
 colnames(filledData) <- c("interval", "steps", "date", "mean")
-```
-
-```
-## Error in colnames(filledData) <- c("interval", "steps", "date", "mean"): object 'filledData' not found
 ```
 
 Then we replace the missing values with the interval mean (rounded to the nearest integer):
 
 ```r
 filledData$mean <- as.integer(filledData$mean)
-```
-
-```
-## Error in eval(expr, envir, enclos): object 'filledData' not found
-```
-
-```r
 filledData$steps <- ifelse(is.na(filledData$steps), filledData$mean, filledData$steps)
-```
-
-```
-## Error in ifelse(is.na(filledData$steps), filledData$mean, filledData$steps): object 'filledData' not found
-```
-
-```r
 filledData$mean <- NULL
-```
-
-```
-## Error in filledData$mean <- NULL: object 'filledData' not found
 ```
 
 To make a histogram of the dataset without missing values, we have to aggregate the data by day:
@@ -189,10 +131,6 @@ To make a histogram of the dataset without missing values, we have to aggregate 
 filledDataByDay <- aggregate(steps ~ date, data=filledData, FUN=sum)
 ```
 
-```
-## Error in eval(expr, envir, enclos): object 'filledData' not found
-```
-
 This is the histogram with the new dataset:
 
 
@@ -200,9 +138,7 @@ This is the histogram with the new dataset:
 ggplot(filledDataByDay, aes(x=date, y=steps)) + stat_summary(fun.y="sum", geom="bar") + xlab("Date") + ylab("Total number of steps")
 ```
 
-```
-## Error in ggplot(filledDataByDay, aes(x = date, y = steps)): object 'filledDataByDay' not found
-```
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png) 
 
 As we've done previously, the mean of the new dataset is:
 
@@ -212,7 +148,7 @@ mean(filledDataByDay$steps)
 ```
 
 ```
-## Error in mean(filledDataByDay$steps): object 'filledDataByDay' not found
+## [1] 10749.77
 ```
 
 And the median is:
@@ -222,7 +158,7 @@ median(filledDataByDay$steps)
 ```
 
 ```
-## Error in median(filledDataByDay$steps): object 'filledDataByDay' not found
+## [1] 10641
 ```
 
 The mean and the median are not very different from what we calculated before.
@@ -247,10 +183,6 @@ Then we apply this function to the filled dataset:
 filledData$dayType <- as.factor(sapply(filledData$date, dayType))
 ```
 
-```
-## Error in lapply(X = X, FUN = FUN, ...): object 'filledData' not found
-```
-
 Finally we make a plot to compare the difference in the average number of steps between weekdays and weekends:
 
 
@@ -262,6 +194,4 @@ for (type in c("weekend", "weekday")) {
 }
 ```
 
-```
-## Error in eval(expr, envir, enclos): object 'filledData' not found
-```
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png) 
